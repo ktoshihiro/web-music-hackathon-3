@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>MIDI</title>
+    <style>
+        canvas.pad {
+            color: antiquewhite;
+            border: 1px solid;
+        }
+    </style>
+    <script src="lib/WebMIDIAPI.js"></script>
+    <script src="js/myMIDI.js"></script>
+</head>
+<body>
+<select id="MIDIInputs"></select>
+<select id="MIDIOutputs"></select>
+<button id="start">START</button>
+<button id="stop">STOP</button>
+<br/>
+<canvas class="pad" id="pad00" width="300" height="300"></canvas>
+<canvas class="pad" id="pad01" width="300" height="300"></canvas>
+<br/>
+<canvas class="pad" id="pad10" width="300" height="300"></canvas>
+<canvas class="pad" id="pad11" width="300" height="300"></canvas>
+</body>
+</html>

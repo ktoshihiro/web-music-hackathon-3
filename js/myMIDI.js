@@ -4,7 +4,9 @@ var myMIDI;
     var midi;   // interface MIDIAccess
     var inputs = [];
     var outputs = [];
-    var midiout;
+    var midiout, mikuout;
+    //const mikuDeviceName = "Microsoft GS Wavetable Synth";
+    const mikuDeviceName = "NSX-39 ";   // デバイス名の最後にスペースがあるのが罠デス
     var intervalID;
     var lastNote;
 
@@ -48,6 +50,10 @@ var myMIDI;
                 opt.text = outputs[i].name;
                 opt.value = i;
                 document.getElementById("MIDIOutputs").add(opt);
+                if (mikuDeviceName === outputs[i].name) {
+                    mikuout = outputs[i];
+                    console.log('mikuout: ', mikuout);
+                }
             }
         }
 
@@ -80,7 +86,8 @@ var myMIDI;
             if (!midiout) {
                 return;
             }
-            intervalID = setInterval(noteOnTask, 500);
+            mikuout.send([0xf0, 0x43, 0x79, 0x09, 0x11, 0x0a, 0x00, 0x32, 0x4a, 0x7f, 0x29, 0x01, 0xf7]);
+            intervalID = setInterval(noteOnTask, 1000);
         }
 
         function onStopClick(event) {
@@ -100,10 +107,9 @@ var myMIDI;
 
         /**
          *
-         * @param event
+         * @param {MouseEvent} event
          */
         function onMouseDown(event) {
-            console.log(event);
             if (!midiout) {
                 return;
             }
@@ -126,8 +132,6 @@ var myMIDI;
         }
 
         function onMouseUp(event) {
-            console.log(event);
-            console.log(event);
             if (!midiout) {
                 return;
             }
@@ -151,9 +155,6 @@ var myMIDI;
 
         function onMIDIInputChange(event) {
             var targetID = event.target.id;
-            console.log(arguments);
-            console.log(event.target.id);
-            console.log(event.target.selectedIndex);
             for (var i = 0; i < inputs.length; i++) {
                 inputs[i].onmidimessage = null;
             }
@@ -162,7 +163,6 @@ var myMIDI;
 
         function onMIDIOutputChange(event) {
             midiout = outputs[event.target.selectedIndex];
-            console.log(midiout);
         }
 
         function onMIDIMessage(event) {
@@ -172,12 +172,19 @@ var myMIDI;
             console.log("Channel: " + (channel + 1));
             switch (status) {
                 case 0x80:
-                    console.log("Note Off");
-                    console.log(event.data[1], event.data[2]);
+                    //console.log("Note Off");
+                    //console.log(event.data[1], event.data[2]);
                     break;
                 case 0x90:
-                    console.log("Note On");
-                    console.log(event.data[1], event.data[2]);
+                    //console.log("Note On");
+                    //console.log(event.data[1], event.data[2]);
+                    if (event.data[2] > 0) {
+                        if (event.data[1] === lastNote) {
+                            console.log("OK");
+                            sendDohentai();
+                            //mikuout.send([0x90, 64, 127]);
+                        }
+                    }
                     break;
                 case 0xA0:
                     console.log("Polyphonic key pressure / Aftertouch");
@@ -202,6 +209,26 @@ var myMIDI;
                     console.log("System Messages");
                     break;
             }
+        }
+
+        var count = 0;
+        function sendDohentai() {
+            //mikuout.send([0x90, 64, 127]);
+            count++;
+            //mikuout.send([0x80, 64, 0]);
+            mikuout.send([0x90, 64, 127]);
+            if (count < 5) {
+                console.log(count);
+                setTimeout(sendDohentai, 250);
+            } else {
+                count = 0;
+                setTimeout(stopDohentai, 250);
+                //mikuout.send([0x80, 64, 0]);
+            }
+        }
+
+        function stopDohentai() {
+            mikuout.send([0x80, 64, 0]);
         }
 
         function handleControlChange(controllerNumber, data) {

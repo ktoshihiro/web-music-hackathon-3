@@ -1,3 +1,6 @@
+/// <reference path="../lib/d.ts/DefinitelyTyped/es6-promise/es6-promise.d.ts">
+/// <reference path="../lib/d.ts/webmidiapi.d.ts">
+
 var myMIDI;
 
 (function (myMidi) {
@@ -8,6 +11,7 @@ var myMIDI;
     //const mikuDeviceName = "Microsoft GS Wavetable Synth";
     const mikuDeviceName = "NSX-39 ";   // デバイス名の最後にスペースがあるのが罠デス
     var intervalID;
+    var intervalTime = 750;
     var lastNote;
 
     var init = (function () {
@@ -16,17 +20,17 @@ var myMIDI;
                 .then(function (access) {
                     midi = access;
 
-                    if (typeof access.inputs === "function") {
-                        console.log("inputs is function");
+                    if (typeof midi.inputs === "function") {
+                        console.log("MIDIAccess.inputs is function");
                         inputs = midi.inputs();
                         outputs = midi.outputs();
                     } else {
-                        console.log("inputs is not function");
-                        var it = access.inputs.values();
+                        console.log("MIDIAccess.inputs is not function");
+                        var it = midi.inputs.values();
                         for (var o = it.next(); !o.done; o = it.next()) {
                             inputs.push(o.value);
                         }
-                        it = access.outputs.values();
+                        it = midi.outputs.values();
                         for (var o = it.next(); !o.done; o = it.next()) {
                             outputs.push(o.value);
                         }
@@ -87,7 +91,7 @@ var myMIDI;
                 return;
             }
             mikuout.send([0xf0, 0x43, 0x79, 0x09, 0x11, 0x0a, 0x00, 0x32, 0x4a, 0x7f, 0x29, 0x01, 0xf7]);
-            intervalID = setInterval(noteOnTask, 1000);
+            intervalID = setInterval(noteOnTask, intervalTime);
         }
 
         function onStopClick(event) {
@@ -131,6 +135,10 @@ var myMIDI;
             event.preventDefault();
         }
 
+        /**
+         *
+         * @param {MouseEvent} event
+         */
         function onMouseUp(event) {
             if (!midiout) {
                 return;
@@ -153,6 +161,10 @@ var myMIDI;
             event.preventDefault();
         }
 
+        /**
+         *
+         * @param {Event} event
+         */
         function onMIDIInputChange(event) {
             var targetID = event.target.id;
             for (var i = 0; i < inputs.length; i++) {
@@ -161,10 +173,18 @@ var myMIDI;
             inputs[event.target.selectedIndex].onmidimessage = onMIDIMessage;
         }
 
+        /**
+         *
+         * @param {Event} event
+         */
         function onMIDIOutputChange(event) {
             midiout = outputs[event.target.selectedIndex];
         }
 
+        /**
+         *
+         * @param {MIDIMessageEvent} event
+         */
         function onMIDIMessage(event) {
             var status = event.data[0] & 0xF0;
             var channel = event.data[0] & 0x0F;
@@ -219,10 +239,10 @@ var myMIDI;
             mikuout.send([0x90, 64, 127]);
             if (count < 5) {
                 console.log(count);
-                setTimeout(sendDohentai, 250);
+                setTimeout(sendDohentai, intervalTime / 4);
             } else {
                 count = 0;
-                setTimeout(stopDohentai, 250);
+                setTimeout(stopDohentai, intervalTime / 4);
                 //mikuout.send([0x80, 64, 0]);
             }
         }
@@ -276,10 +296,3 @@ var myMIDI;
 })(myMIDI || (myMIDI = {}));
 
 window.addEventListener("load", myMIDI.init);
-
-/*
- 00 - 07
- 10 - 17
- ...
- 70 - 77
- */
